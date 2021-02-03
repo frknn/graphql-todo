@@ -12,7 +12,7 @@ const typeDefs = gql`
     title: String!
     description: String
     completed: Boolean!
-    owner: Person!
+    owner: Person
   }
 
   type Query {
@@ -21,9 +21,9 @@ const typeDefs = gql`
     getSinglePerson(name: String!): Person
     getSingleNote(title: String!): Note
   }
-  
+
   type Mutation {
-    addPerson(name: String!, age: Int): Person!
+    addPerson(name: String!, age: Int): Person
     addNote(title: String!, description: String, completed: Boolean = false, owner: String!): Note!
     deletePerson(name: String!): String!
     deleteNote(title: String!): String!
@@ -64,13 +64,13 @@ const resolvers = {
       notes.push(noteObject)
       return noteObject
     },
-    deleteNote: (root, args) => {
-      notes = notes.filter(n => n.title !== args.title)
-      return 'Note with given title is deleted!'
-    },
     deletePerson: (root, args) => {
       people = people.filter(p => p.name !== args.name)
       return 'Person with given name is deleted!'
+    },
+    deleteNote: (root, args) => {
+      notes = notes.filter(n => n.title !== args.title)
+      return 'Note with given title is deleted!'
     },
     updateAge: (root, args) => {
       const foundPerson = people.find(p => p.name === args.name)
@@ -94,5 +94,4 @@ const resolvers = {
 }
 
 const server = new ApolloServer({ typeDefs, resolvers })
-
 server.listen().then(({ url }) => console.log(`Server ready at ${url}`))
