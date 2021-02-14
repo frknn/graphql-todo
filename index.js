@@ -3,12 +3,14 @@ let { people, notes } = require('./data')
 
 const typeDefs = gql`
   type Person {
+    id: ID
     name: String!
     age: Int
     notes: [Note!]
   }
 
   type Note {
+    id: ID
     title: String!
     description: String
     completed: Boolean!
@@ -18,17 +20,17 @@ const typeDefs = gql`
   type Query {
     getAllPeople: [Person!]
     getAllNotes: [Note!]
-    getSinglePerson(name: String!): Person
+    getSinglePerson(id: ID!): Person
     getSingleNote(title: String!): Note
   }
 
   type Mutation {
     addPerson(name: String!, age: Int): Person
     addNote(title: String!, description: String, completed: Boolean = false, owner: String!): Note!
-    deletePerson(name: String!): String!
-    deleteNote(title: String!): String!
-    updateAge(name: String!, age: Int!): Person!
-    toggleNoteCompleted(title: String!): Note!
+    deletePerson(id: ID!): Person!
+    deleteNote(id: ID!): Note!
+    updateAge(id: ID!, age: Int!): Person!
+    toggleNoteCompleted(id: ID!): Note!
   }
 `
 
@@ -41,13 +43,14 @@ const resolvers = {
   },
   Query: {
     getAllPeople: () => people,
-    getSinglePerson: (root, args) => people.find(p => p.name === args.name),
+    getSinglePerson: (root, args) => people.find(p => p.id == args.id),
     getAllNotes: () => notes,
     getSingleNote: (root, args) => notes.find(n => n.title === args.title)
   },
   Mutation: {
     addPerson: (root, args) => {
       const personObject = {
+        id: Math.floor(Math.random() * 100) + 3,
         name: args.name,
         age: args.age
       }
@@ -56,6 +59,7 @@ const resolvers = {
     },
     addNote: (root, args) => {
       const noteObject = {
+        id: Math.floor(Math.random() * 100) + 7,
         title: args.title,
         description: args.description,
         completed: args.completed,
@@ -65,33 +69,39 @@ const resolvers = {
       return noteObject
     },
     deletePerson: (root, args) => {
-      people = people.filter(p => p.name !== args.name)
-      return 'Person with given name is deleted!'
+      const personToDelete = people.find(p => p.id == args.id)
+      people = people.filter(p => p.id != args.id)
+      return personToDelete
     },
     deleteNote: (root, args) => {
-      notes = notes.filter(n => n.title !== args.title)
-      return 'Note with given title is deleted!'
+      const noteToDelete = notes.find(n => n.id == args.id)
+      notes = notes.filter(n => n.id != args.id)
+      return noteToDelete
     },
     updateAge: (root, args) => {
-      const foundPerson = people.find(p => p.name === args.name)
+      const foundPerson = people.find(p => p.id == args.id)
       const updatedPerson = {
         ...foundPerson,
         age: args.age
       }
-      people = people.map(p => p.name === args.name ? updatedPerson : p)
+      people = people.map(p => p.id == args.id ? updatedPerson : p)
       return updatedPerson
     },
     toggleNoteCompleted: (root, args) => {
-      const foundNote = notes.find(n => n.title === args.title)
+      const foundNote = notes.find(n => n.id == args.id)
       const updatedNote = {
         ...foundNote,
         completed: !foundNote.completed
       }
-      notes = notes.map(n => n.title === args.title ? updatedNote : n)
+      notes = notes.map(n => n.id == args.id ? updatedNote : n)
       return updatedNote
     }
   }
 }
 
 const server = new ApolloServer({ typeDefs, resolvers })
-server.listen().then(({ url }) => console.log(`Server ready at ${url}`))
+server.listen(
+  {
+    port: process.env.PORT || 4000
+  }
+).then(({ url }) => console.log(`Server ready at ${url}`))
